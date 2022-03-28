@@ -49,6 +49,7 @@ const authenticated_menu=[
     //the remaining menu items are added
     {label:"Ice Cream Inventory Summary",home:"Inventory",function:"navigate({fn:'show_inventory_summary'})", roles:["owner","administrator"]},
 
+    {label:"Groups",function:"navigate({fn:'show_group_list'})"},
     {label:"Employee List",function:"navigate({fn:'employee_list'})"},
     {label:"Admin Tools",id:"menu2", roles:["manager","owner","administrator"], menu:[
         {label:"Update User",function:"update_user()",panel:"update_user"},
@@ -290,6 +291,67 @@ async function record_inventory(params){
             //This executes if the data needed to create the form or report is not retrieved successfully. It is essentially an error message to the user.
             tag("inventory_panel").innerHTML="Unable to get inventory list: " + response.message + "."
         }
+    }
+}
+
+async function show_group_list(params){
+    console.log('in show_group_list')
+
+    if(!logged_in()){show_home();return}//in case followed a link after logging out. This prevents the user from using this feature when they are not authenticated.
+
+    hide_menu()
+
+    //build web page
+    tag("canvas").innerHTML=` 
+        <div class="page">
+            <div id="group-title" style="text-align:center"><h2>Groups</h2></div>
+            <div id="group-message" style="width:100%"></div>
+            <div id="group_panel"  style="width:100%">
+            </div>
+        </div>  
+    `
+
+    //show spinner loading icon
+    tag("group-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>'
+
+    const response=await server_request({
+        mode:"get_group_list"
+    })
+    //remove spinner icon
+    tag("group-message").innerHTML=''
+
+    console.log('group_list: ',response)
+
+    if(response.status==="success"){//If the data is retrieved successfully, we proceed.
+    
+        tag("group-title").innerHTML='<h2>All Groups</h2>'
+        //<CHANGEME>Build the table to display the groups.
+        const html=[`
+        <table class="inventory-table">
+            <tr class=fish>
+            <th class="sticky">Group Name</th>
+            <th class="sticky">Description</th>
+            </tr>
+            `] //Add other table columns here
+
+    
+        //processing the data to fit in the table
+        for(record of response.data){
+            let target=html
+            //add a new table row to the table for each group
+            target.push("<tr>")
+            //insert the flavor name (record.field.name)
+            target.push(`<td style="text-align:left">${record.fields.group_name}</td>`)
+
+            //create empty cells in the table for the inventory counts. Notice that the ID for the empty cell is set to be a combination of the id for the flavor (record.id) and the store (stores[store]) corresponding to the column. This way the table can be populated with the correct data in the correct cells.
+            target.push(`<td>${record.fields.group_desc}</td>`)
+            target.push("</tr>")
+        }
+        html.push("</table>")
+        tag("group_panel").innerHTML=html.join("")
+    }else{
+        //This executes if the data needed to create the form or report is not retrieved successfully. It is essentially an error message to the user.
+        tag("group_panel").innerHTML="Unable to get group list: " + response.message + "."        
     }
 }
 
