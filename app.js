@@ -328,8 +328,9 @@ async function show_group_list(params){
         //<CHANGEME>Build the table to display the groups.
         const html=[`
         <table class="inventory-table">
-            <tr class=fish>
+            <tr>
             <th class="sticky">Group Name</th>
+            <th class="sticky">Group Type</th>
             <th class="sticky">Description</th>
             </tr>
             `] //Add other table columns here
@@ -342,6 +343,9 @@ async function show_group_list(params){
             target.push("<tr>")
             //insert the flavor name (record.field.name)
             target.push(`<td style="text-align:left">${record.fields.group_name}</td>`)
+
+            //Header for Group Type
+            target.push(`<td style="text-align:left">${record.fields.type}</td>`)
 
             //create empty cells in the table for the inventory counts. Notice that the ID for the empty cell is set to be a combination of the id for the flavor (record.id) and the store (stores[store]) corresponding to the column. This way the table can be populated with the correct data in the correct cells.
             target.push(`<td>${record.fields.group_desc}</td>`)
