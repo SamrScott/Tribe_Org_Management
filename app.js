@@ -69,12 +69,14 @@ function show_home(){
         }
     }
 
-    //the main page is rendered with the Brooker's Ice cream logo. 
+    //the main page is rendered with the Tribe of Kyngs logo. 
 
     tag("canvas").innerHTML=` 
     <div class="center-screen">
-    
-    <p><img height="${window.innerHeight * .6}" src="images/brookers-logo.png"></p>
+    <h2 style="color:darkslategray">Welcome to the</h2>
+    <h1><span style="color:goldenrod">TRIBE <span style="color:maroon;font-size:28">of</span> KYNGS</span></h1>
+    <h2 style="color:darkslategray">Management Page</h2>
+    <p><img height="${window.innerHeight * .6}" src="images/tribe_of_kyngs_logo.jpg"></p>
     <div style="text-align:center"></div>
     
     
@@ -301,7 +303,7 @@ async function show_group_list(params){
 
     hide_menu()
 
-    //build web page
+    //build web page with Title, Info, and Content sections
     tag("canvas").innerHTML=` 
         <div class="page">
             <div id="group-title" style="text-align:center"><h2>Groups</h2></div>
