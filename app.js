@@ -1,4 +1,72 @@
+/* TEMPLATE DATA GET FUNCTION
+async function show_some_data(params){ //<CHANGEME> name function after data being displayed
+    console.log('in <FUNCTION NAME>')
 
+    if(!logged_in()){show_home();return}//in case followed a link after logging out. This prevents the user from using this feature when they are not authenticated.
+
+    hide_menu()
+
+    //<CHANGEME> create div names related to what data is being viewed
+    //build web page with Title, Info, and Content sections
+    tag("canvas").innerHTML=` 
+        <div class="page">
+            <div id="data-title" style="text-align:center"><h2>Data</h2></div>
+            <div id="data-message" style="width:100%"></div>
+            <div id="data_panel"  style="width:100%">
+            </div>
+        </div>  
+    `
+
+    //show spinner loading icon
+    tag("data-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>' \\<New Message ID>
+
+    const response=await server_request({
+        mode:"<SERVER FUNCTION NAME>" \\the name of a function in app.gs on GAS
+    })
+    //remove spinner icon
+    tag("data-message").innerHTML='' \\<New Message ID>
+
+    console.log('<Data title>: ',response)
+
+    if(response.status==="success"){//If the data is retrieved successfully, we proceed.
+    
+        tag("data-title").innerHTML='<h2>Data</h2>'
+        //<CHANGEME>Build the table to display the groups.
+        const html=[`
+        <table class="inventory-table">
+            <tr>
+            <th class="sticky">COLUMN NAME</th>
+            <th class="sticky">COLUMN NAME</th>
+            <th class="sticky">CoLUMN NAME</th>
+            </tr>
+            `] //<Add Columns As Needed>
+
+    
+        //processing the data to fit in the table
+        for(record of response.data){
+            let target=html
+            //add a new table row to the table for each group
+            target.push("<tr>")
+
+            //Header for Colum 1
+            target.push(`<td style="text-align:left">${record.fields.column1data}</td>`) \\<CHANGEME> to column name
+
+            //Header for Column 2
+            target.push(`<td style="text-align:left">${record.fields.column2data}</td>`) \\<CHANGEME> to column name
+
+            //Header of Column 3
+            target.push(`<td>${record.fields.colum3data}</td>`) \\<CHANGEME> to column name
+
+            target.push("</tr>")
+        }
+        html.push("</table>")
+        tag("data_panel").innerHTML=html.join("") \\<CHANGEME> to panel name
+    }else{
+        //This executes if the data needed to create the form or report is not retrieved successfully. It is essentially an error message to the user.
+        tag("data_panel").innerHTML="Unable to get group list: " + response.message + "." \\<CHANGEME> to panel name
+    }
+}
+*/
 //gas project /apps/brookers/system 
 //This global variable is set to contain the information needed to make a request of the Google App Script server.
 const gas_end_point = 'https://script.google.com/macros/s/'+gas_deployment_id+'/exec'
