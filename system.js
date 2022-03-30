@@ -201,7 +201,7 @@ function working(status=true){//used to present a visual cue (spinning wheel) to
             tag("hamburger").className="fas fa-spinner fa-pulse"
             tag("menu-close").className="fas fa-spinner fa-pulse"
         }else{
-            tag("hamburger").className="fas fa-bars"
+            tag("hamburger").className="fas fa-bars fa-2x"
             tag("menu-close").className="fas fa-times"
         }
     }catch(e){
