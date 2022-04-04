@@ -67,6 +67,7 @@ async function show_some_data(params){ //<CHANGEME> name function after data bei
     }
 }
 */
+
 //gas project /apps/brookers/system 
 //This global variable is set to contain the information needed to make a request of the Google App Script server.
 const gas_end_point = 'https://script.google.com/macros/s/'+gas_deployment_id+'/exec'
@@ -117,11 +118,13 @@ const authenticated_menu=[
     //the remaining menu items are added
     {label:"Ice Cream Inventory Summary",home:"Inventory",function:"navigate({fn:'show_inventory_summary'})", roles:["owner","administrator"]},
 
-    {label:"Groups",function:"navigate({fn:'show_group_list'})"},
     {label:"Employee List",function:"navigate({fn:'employee_list'})"},
     {label:"Admin Tools",id:"menu2", roles:["manager","owner","administrator"], menu:[
         {label:"Update User",function:"update_user()",panel:"update_user"},
     ]},
+    {},
+    //section for Tribe of Kyngs Functions
+    {label:"Groups",function:"navigate({fn:'show_group_list'})"},
 
 ]
 
@@ -399,9 +402,13 @@ async function show_group_list(params){
         const html=[`
         <table class="inventory-table">
             <tr>
-            <th class="sticky">Group Name</th>
+            <th class="sticky">Group ID</th>
             <th class="sticky">Group Type</th>
+            <th class="sticky">Group Name</th>
             <th class="sticky">Description</th>
+            <th class="sticky">Leader ID</th>
+            <th class="sticky">Parent Groups</th>
+            <th class="sticky">Actions</th>
             </tr>
             `] //Add other table columns here
 
@@ -409,16 +416,39 @@ async function show_group_list(params){
         //processing the data to fit in the table
         for(record of response.data){
             let target=html
-            //add a new table row to the table for each group
+            //add a new table row to the table for each record
             target.push("<tr>")
-            //insert the flavor name (record.field.name)
+
+            //Group ID
+            target.push(`<td style="text-align:center">${record.fields.group_id}</td>`)
+            
+            //Group Type
+            target.push(`<td style="text-align:left">${record.fields.type}</td>`)
+            
+            //Group Name
             target.push(`<td style="text-align:left">${record.fields.group_name}</td>`)
 
-            //Header for Group Type
-            target.push(`<td style="text-align:left">${record.fields.type}</td>`)
+            //Group Description
+            target.push(`<td style="text-align:left">${record.fields.group_desc}</td>`)
 
-            //create empty cells in the table for the inventory counts. Notice that the ID for the empty cell is set to be a combination of the id for the flavor (record.id) and the store (stores[store]) corresponding to the column. This way the table can be populated with the correct data in the correct cells.
-            target.push(`<td>${record.fields.group_desc}</td>`)
+            //Leader ID
+            if (record.fields.leader_id){
+                target.push(`<td style="text-align:left">${record.fields.leader_id}</td>`)
+            } else target.push("<td></td>")
+
+            //Parent Groups
+            if (record.fields.type === "Region") {
+                target.push("<td></td>")
+            } else {
+                target.push(`<td style="text-align:left">${record.fields.parent_groups}</td>`)
+            }
+
+            //Actions
+            target.push("<td>")
+                target.push(`<a class="tools" onclick="view_group_members(${record.fields.group_id}, '${record.fields.type}')">View Members</a>`)
+            target.push("</td>")
+
+            //close row
             target.push("</tr>")
         }
         html.push("</table>")
@@ -427,6 +457,100 @@ async function show_group_list(params){
         //This executes if the data needed to create the form or report is not retrieved successfully. It is essentially an error message to the user.
         tag("group_panel").innerHTML="Unable to get group list: " + response.message + "."        
     }
+}
+
+async function view_group_members(group_id, group_type){
+    console.log(`in view_group_members. Group ID: ${group_id}, Group Type: ${group_type}`)
+
+    if(!logged_in()){show_home();return}//in case followed a link after logging out. This prevents the user from using this feature when they are not authenticated.
+
+    hide_menu()
+
+    //build web page with Title, Info, and Content sections
+    tag("canvas").innerHTML=` 
+        <div class="page">
+            <div id="members-title" style="text-align:center"><h2>Groups</h2></div>
+            <div id="members-message" style="width:100%"></div>
+            <div id="members_panel"  style="width:100%">
+            </div>
+        </div>  
+    `
+
+    //show spinner loading icon
+    tag("members-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>'
+
+    const response=await server_request({
+        mode:"get_group_members",
+        group: group_id
+    })
+    //remove spinner icon
+    tag("members-message").innerHTML=''
+
+    console.log('membership list: ',response)
+
+    if(response.status === "success") {
+        
+        tag("members-title").innerHTML=`<h2>"${response.group_data[0].fields.group_name}" ${response.group_data[0].fields.type} Membership</h2>`
+        //<CHANGEME>Build the table to display the groups.
+        const html=[`
+        <table class="inventory-table">
+            <tr>
+            <th class="sticky">Name</th>
+            <th class="sticky" id="Region">Region</th>
+            <th class="sticky" id="District">District</th>
+            <th class="sticky" id="Table">table</th>
+            <th class="sticky">Actions</th>
+            </tr>
+            `] //Add other table columns here
+
+        //processing the data to fit in the table
+        for(record of response.member_data){
+            //for each new record, create new row
+            let target=html;
+            target.push("<tr>")
+
+            //Name
+            target.push(`<td style="text-align: left">${record.fields.Name}</td>`)
+
+            //Table
+            target.push(`<td style="text-align: left">${record.fields.region}</td>`)
+
+            //District
+            target.push(`<td style="text-align: left">${record.fields.district}</td>`)
+
+            //Region
+            target.push(`<td style="text-align: left">${record.fields.table}</td>`)
+
+            //actions
+            target.push(`<td style="text-align: left"></td>`)
+
+            //close row
+            target.push("</tr>")
+        }
+        html.push("</table>")
+        tag("members_panel").innerHTML=html.join("")
+        tag("members-message").innerHTML=`<a class="tools"onclick=show_group_list()>Return to All Groups</a>`
+
+        //color the header of the current group
+        switch(group_type) {
+            case "Table":
+                tag("Table").style.backgroundColor="lightgreen"
+                break
+            case "District":
+                tag("District").style.backgroundColor="lightgreen"
+                break
+            case "Region":
+                tag("Region").style.backgroundColor="lightgreen"
+                break
+        }
+
+        tag(`${group_type}`).innerHTML=`<th class="sticky" id=${group_type} style="color:light-green">${group_type}</th>`
+    }else{
+        //This executes if the data needed to create the form or report is not retrieved successfully. It is essentially an error message to the user.
+        tag("members_panel").innerHTML="Unable to get membership records: " + response.message + "."        
+    }
+
+    
 }
 
 async function show_inventory_summary(params){
@@ -822,4 +946,3 @@ async function employee_list(){
     }    
 
 }
-
