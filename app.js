@@ -18,13 +18,13 @@ async function show_some_data(params){ //<CHANGEME> name function after data bei
     `
 
     //show spinner loading icon
-    tag("data-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>' \\<New Message ID>
+    tag("data-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>' //<New Message ID>
 
     const response=await server_request({
-        mode:"<SERVER FUNCTION NAME>" \\the name of a function in app.gs on GAS
+        mode:"<SERVER FUNCTION NAME>" //the name of a function in app.gs on GAS
     })
     //remove spinner icon
-    tag("data-message").innerHTML='' \\<New Message ID>
+    tag("data-message").innerHTML='' //<New Message ID>
 
     console.log('<Data title>: ',response)
 
@@ -49,18 +49,18 @@ async function show_some_data(params){ //<CHANGEME> name function after data bei
             target.push("<tr>")
 
             //Header for Colum 1
-            target.push(`<td style="text-align:left">${record.fields.column1data}</td>`) \\<CHANGEME> to column name
+            target.push(`<td style="text-align:left">${record.fields.column1data}</td>`)//<CHANGEME> to column name
 
             //Header for Column 2
-            target.push(`<td style="text-align:left">${record.fields.column2data}</td>`) \\<CHANGEME> to column name
+            target.push(`<td style="text-align:left">${record.fields.column2data}</td>`) //<CHANGEME> to column name
 
             //Header of Column 3
-            target.push(`<td>${record.fields.colum3data}</td>`) \\<CHANGEME> to column name
+            target.push(`<td>${record.fields.colum3data}</td>`) //<CHANGEME> to column name
 
             target.push("</tr>")
         }
         html.push("</table>")
-        tag("data_panel").innerHTML=html.join("") \\<CHANGEME> to panel name
+        tag("data_panel").innerHTML=html.join("") //<CHANGEME> to panel name
     }else{
         //This executes if the data needed to create the form or report is not retrieved successfully. It is essentially an error message to the user.
         tag("data_panel").innerHTML="Unable to get group list: " + response.message + "." \\<CHANGEME> to panel name
@@ -125,8 +125,25 @@ const authenticated_menu=[
     {},
     //section for Tribe of Kyngs Functions
     {label:"Groups",function:"navigate({fn:'show_group_list'})"},
+    {label:get_Group, id:"manage_button", function: "navigate({fn:'manage_my_group'})", roles:["district_leader", "region_leader"]},
 
 ]
+
+function get_Group() {
+    //gets the current logged-in user's group name
+    data=get_user_data()
+    console.log(data)
+    msg = "Manage My "
+    group_type = ''
+    for (role in data.roles) {
+        if (data.roles[role] == "region_leader"){group_type = "Region"}
+        else if (data.roles[role] == "district_leader"){group_type = "District"}
+        else if (data.roles[role] == "table_leader"){group_type = "Table"}
+    }
+    if (group_type === '')
+        group_type = "Friends"
+    return msg + group_type
+}
 
 
 function show_home(){
@@ -549,8 +566,77 @@ async function view_group_members(group_id, group_type){
         //This executes if the data needed to create the form or report is not retrieved successfully. It is essentially an error message to the user.
         tag("members_panel").innerHTML="Unable to get membership records: " + response.message + "."        
     }
+}
+
+async function manage_my_group(params) {
+    console.log('in manage_my_group')
+
+    if(!logged_in()){show_home();return}//in case followed a link after logging out. This prevents the user from using this feature when they are not authenticated.
+
+    hide_menu()
+
+    //build web page with Title, Info, and Content sections
+    tag("canvas").innerHTML=` 
+        <div class="page">
+            <div id="management-title" style="text-align:center"><h2>My Group</h2></div>
+            <div id="management-message" style="width:100%"></div>
+            <div id="management_panel"  style="width:100%">
+            </div>
+        </div>  
+    `
+
+    //show spinner loading icon
+    tag("management-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>'
+
+    const response=await server_request({
+        mode:"get_group_members", //the name of a function in app.gs on GAS
+        group: '3' //<CHANGEME dynamically generate this number based on current user.
+    })
+    //remove spinner icon
+    tag("management-message").innerHTML=''
+
+    console.log('My Group Info: ',response)
+
+    if(response.status==="success"){//If the data is retrieved successfully, we proceed.
+    
+        tag("management-title").innerHTML=`<h2>My ${response.group_data[0].fields.type}</h2>`
+        //<CHANGEME>Build the table to display the groups.
+        /*
+        const html=[`
+        <table class="inventory-table">
+            <tr>
+            <th class="sticky">COLUMN NAME</th>
+            <th class="sticky">COLUMN NAME</th>
+            <th class="sticky">CoLUMN NAME</th>
+            </tr>
+            `] //<Add Columns As Needed>
 
     
+        //processing the data to fit in the table
+        for(record of response.data){
+            let target=html
+            //add a new table row to the table for each group
+            target.push("<tr>")
+
+            //Header for Colum 1
+            target.push(`<td style="text-align:left">${record.fields.column1data}</td>`) //<CHANGEME> to column name
+
+            //Header for Column 2
+            target.push(`<td style="text-align:left">${record.fields.column2data}</td>`) //<CHANGEME> to column name
+
+            //Header of Column 3
+            target.push(`<td>${record.fields.colum3data}</td>`) //<CHANGEME> to column name
+
+            target.push("</tr>")
+        }
+        html.push("</table>")
+        tag("data_panel").innerHTML=html.join("") //<CHANGEME> to panel name
+        */
+       tag("management-message").innerHTML='This page is under construction. Check back soon.'
+    }else{
+        //This executes if the data needed to create the form or report is not retrieved successfully. It is essentially an error message to the user.
+        tag("data_panel").innerHTML="Unable to get group list: " + response.message + "." //<CHANGEME> to panel name
+    }
 }
 
 async function show_inventory_summary(params){
