@@ -413,6 +413,8 @@ async function show_group_list(params){
     console.log('group_list: ',response)
 
     if(response.status==="success"){//If the data is retrieved successfully, we proceed.
+
+        const is_admin=intersect(get_user_data().roles, ["administrator","owner","region_leader"]).length>0
     
         tag("group-title").innerHTML='<h2>All Groups</h2>'
         //<CHANGEME>Build the table to display the groups.
@@ -461,8 +463,12 @@ async function show_group_list(params){
             }
 
             //Actions
-            target.push("<td>")
+            target.push("<td style='text-align:left'>")
                 target.push(`<a class="tools" onclick="view_group_members(${record.fields.group_id}, '${record.fields.type}')">View Members</a>`)
+                if(is_admin && !(record.fields.type === 'Region')){
+                    target.push(`&nbsp;|&nbsp;`)
+                    target.push(`<a class="tools" onclick="move_group(${record.fields.group_name}, ${record.fields.group_id}, ${record.fields.group_type})">Move Group</a>`)
+                }
             target.push("</td>")
 
             //close row
@@ -566,6 +572,12 @@ async function view_group_members(group_id, group_type){
         //This executes if the data needed to create the form or report is not retrieved successfully. It is essentially an error message to the user.
         tag("members_panel").innerHTML="Unable to get membership records: " + response.message + "."        
     }
+}
+
+async function move_group(group_name, group_id, group_type) {
+    //build form to gather new region and/or district
+    //Server Call: move_group(group_id, group_type, new_parrents_array)
+    //navigate to all groups
 }
 
 async function manage_my_group(params) {
