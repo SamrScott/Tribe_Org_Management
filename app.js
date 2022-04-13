@@ -125,6 +125,7 @@ const authenticated_menu=[
     {},
     //section for Tribe of Kyngs Functions
     {label:"Groups",function:"navigate({fn:'show_group_list'})"},
+    {label:"View Members",function:"navigate({fn:'show_user_list'})"},
 
 ]
 
@@ -458,6 +459,100 @@ async function show_group_list(params){
         tag("group_panel").innerHTML="Unable to get group list: " + response.message + "."        
     }
 }
+
+//user_list_funtion
+
+async function show_user_list(params){
+    console.log('in show_user_list')
+
+    if(!logged_in()){show_home();return}//in case followed a link after logging out. This prevents the user from using this feature when they are not authenticated.
+
+    hide_menu()
+
+    //build web page with Title, Info, and Content sections
+    tag("canvas").innerHTML=` 
+        <div class="page">
+            <div id="group-title" style="text-align:center"><h2>Members</h2></div>
+            <div id="group-message" style="width:100%"></div>
+            <div id="group_panel"  style="width:100%">
+            </div>
+        </div>  
+    `
+
+    //show spinner loading icon
+    tag("group-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>'
+
+    const response=await server_request({
+        mode:"get_user_list" //need to fix to user_list
+    })
+    //remove spinner icon
+    tag("group-message").innerHTML=''
+
+    console.log('members_list: ',response)
+
+    if(response.status==="success"){//If the data is retrieved successfully, we proceed.
+    
+        tag("group-title").innerHTML='<h2>All members</h2>'
+        //<CHANGEME>Build the table to display the groups.
+        const html=[`
+        <table class="inventory-table">
+            <tr>
+            <th class="sticky">First Name</th>
+            <th class="sticky">Last Name</th>
+            <th class="sticky">Phone Number</th>
+            <th class="sticky">table</th>
+            <th class="sticky">district</th>
+            <th class="sticky">region</th>
+            <th class="sticky">Actions</th>
+            </tr>
+            `] //Add other table columns here
+
+    
+        //processing the data to fit in the table
+        for(record of response.data){
+            let target=html
+            //add a new table row to the table for each record
+            target.push("<tr>")
+
+            //Members First Name
+            target.push(`<td style="text-align:center">${record.fields.first_name}</td>`)
+            
+            //Members Last Name
+            target.push(`<td style="text-align:left">${record.fields.last_name}</td>`)
+            
+            //Members Phone Number
+            target.push(`<td style="text-align:left">${record.fields.phone}</td>`)
+
+            //Members Table
+            target.push(`<td style="text-align:left">${record.fields.table}</td>`)
+
+            //Members Disctrict
+            target.push(`<td style="text-align:left">${record.fields.district}</td>`)
+
+            //Members Region
+            target.push(`<td style="text-align:left">${record.fields.region}</td>`)
+
+            //Actions
+            target.push("<td>")
+                target.push(`<a class="tools" onclick="">Update Contact Info</a>`)
+            target.push("</td>")
+
+            //close row
+            target.push("</tr>")
+        }
+        html.push("</table>")
+        tag("group_panel").innerHTML=html.join("")
+    }else{
+        //This executes if the data needed to create the form or report is not retrieved successfully. It is essentially an error message to the user.
+        tag("group_panel").innerHTML="Unable to get group list: " + response.message + "."        
+    }
+}
+
+
+
+
+
+
 
 async function view_group_members(group_id, group_type){
     console.log(`in view_group_members. Group ID: ${group_id}, Group Type: ${group_type}`)
