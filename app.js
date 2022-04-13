@@ -500,6 +500,7 @@ async function show_user_list(params){
             <th class="sticky">First Name</th>
             <th class="sticky">Last Name</th>
             <th class="sticky">Phone Number</th>
+            <th class="sticky">Email</th>
             <th class="sticky">table</th>
             <th class="sticky">district</th>
             <th class="sticky">region</th>
@@ -522,6 +523,9 @@ async function show_user_list(params){
             
             //Members Phone Number
             target.push(`<td style="text-align:left">${record.fields.phone}</td>`)
+
+            //Members Email
+            target.push(`<td style="text-align:left">${record.fields.email}</td>`)
 
             //Members Table
             target.push(`<td style="text-align:left">${record.fields.table}</td>`)
