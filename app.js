@@ -460,7 +460,7 @@ async function show_group_list(params){
     }
 }
 
-//user_list_funtion
+//user_list_function
 
 async function show_user_list(params){
     console.log('in show_user_list')
@@ -490,20 +490,24 @@ async function show_user_list(params){
 
     console.log('members_list: ',response)
 
+
     if(response.status==="success"){//If the data is retrieved successfully, we proceed.
     
-        tag("group-title").innerHTML='<h2>All members</h2>'
+
+
+        tag("group-title").innerHTML=`<h2>All members</h2><p><input type="text" id="tableinput" onkeyup="filtertable(4,'tableinput')" placeholder="Search for table" title="search"> <input type="text" id="districtinput" onkeyup="filtertable(5,'districtinput')" placeholder="Search for district" title="search"><input type="text" id="regioninput" onkeyup="filtertable(6,'regioninput')" placeholder="Search for region" title="search">`
+        
         //<CHANGEME>Build the table to display the groups.
         const html=[`
-        <table class="inventory-table">
+        <table id="allmembers" class="inventory-table">
             <tr>
             <th class="sticky">First Name</th>
             <th class="sticky">Last Name</th>
             <th class="sticky">Phone Number</th>
             <th class="sticky">Email</th>
-            <th class="sticky">table</th>
-            <th class="sticky">district</th>
-            <th class="sticky">region</th>
+            <th class="sticky">Table</th>
+            <th class="sticky">District</th>
+            <th class="sticky">Region</th>
             <th class="sticky">Actions</th>
             </tr>
             `] //Add other table columns here
@@ -1045,3 +1049,24 @@ async function employee_list(){
     }    
 
 }
+//Function for the search bar
+
+function filtertable(columnnumber,inputid) {
+    console.log("infiltertable inputid:",inputid)
+    var input, filter, table, tr, td, i, txtValue;
+    input = document.getElementById(inputid);
+    filter = input.value.toUpperCase();
+    table = document.getElementById("allmembers");
+    tr = table.getElementsByTagName("tr");
+    for (i = 0; i < tr.length; i++) {
+      td = tr[i].getElementsByTagName("td")[columnnumber];
+      if (td) {
+        txtValue = td.textContent || td.innerText;
+        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+          tr[i].style.display = "";
+        } else {
+          tr[i].style.display = "none";
+        }
+      }       
+    }
+  }
