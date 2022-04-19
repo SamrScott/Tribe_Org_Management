@@ -125,11 +125,11 @@ const authenticated_menu=[
     {},
     //section for Tribe of Kyngs Functions
     {label:"Groups",function:"navigate({fn:'show_group_list'})"},
-    {label:get_Group, id:"manage_button", function: "navigate({fn:'manage_my_group'})", roles:["district_leader", "region_leader"]},
-
+    {label:get_group_menu_item, id:"manage_button", function: "navigate({fn:'manage_my_group'})", roles:["district_leader", "region_leader"]},
+    {label: "Move Rod Testwright",function:"navigate({fn:'move_member', user_id:9})"},
 ]
 
-function get_Group() {
+function get_group_menu_item() {
     //gets the current logged-in user's group name
     data=get_user_data()
     console.log(data)
@@ -633,6 +633,70 @@ async function manage_my_group(params) {
         tag("data_panel").innerHTML=html.join("") //<CHANGEME> to panel name
         */
        tag("management-message").innerHTML='This page is under construction. Check back soon.'
+    }else{
+        //This executes if the data needed to create the form or report is not retrieved successfully. It is essentially an error message to the user.
+        tag("data_panel").innerHTML="Unable to get group list: " + response.message + "." //<CHANGEME> to panel name
+    }
+}
+
+async function move_member(params) {
+    console.log('in move_member')
+
+    if(!logged_in()){show_home();return}//in case followed a link after logging out. This prevents the user from using this feature when they are not authenticated.
+
+    hide_menu()
+
+    //<CHANGEME> create div names related to what data is being viewed
+    //build web page with Title, Info, and Content sections
+    tag("canvas").innerHTML=` 
+        <div class="page">
+            <div id="move-title" style="text-align:center"><h2>Data</h2></div>
+            <div id="move-message" style="width:100%"></div>
+            <div id="move_panel"  style="width:100%">
+            </div>
+        </div>  
+    `
+
+    //show spinner loading icon
+    tag("move-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>'
+
+    const response=await server_request({
+        mode:"move_form_data", //the name of a function in app.gs on GAS
+        user_id: params.user_id
+    })
+    //remove spinner icon
+    tag("move-message").innerHTML='' //<New Message ID>
+
+    console.log('Move Form Information: ',response)
+
+    if(response.status==="success"){//If the data is retrieved successfully, we proceed.
+        
+        tag("data-title").innerHTML='<h2>Data</h2>'
+        //<CHANGEME>Build the table to display the groups.
+        const form=[`
+
+        `] //<Add Columns As Needed>
+
+    
+        //processing the data to fit in the table
+        for(record of response.data){ //<CHANGEME> Reformat
+            let target=html
+            //add a new table row to the table for each group
+            target.push("<tr>")
+
+            //Header for Colum 1
+            target.push(`<td style="text-align:left">${record.fields.column1data}</td>`)//<CHANGEME> to column name
+
+            //Header for Column 2
+            target.push(`<td style="text-align:left">${record.fields.column2data}</td>`) //<CHANGEME> to column name
+
+            //Header of Column 3
+            target.push(`<td>${record.fields.colum3data}</td>`) //<CHANGEME> to column name
+
+            target.push("</tr>")
+        }
+        html.push("</table>")
+        tag("data_panel").innerHTML=html.join("") //<CHANGEME> to panel name
     }else{
         //This executes if the data needed to create the form or report is not retrieved successfully. It is essentially an error message to the user.
         tag("data_panel").innerHTML="Unable to get group list: " + response.message + "." //<CHANGEME> to panel name
