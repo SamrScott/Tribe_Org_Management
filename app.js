@@ -423,8 +423,9 @@ async function show_group_list(params){
             <th class="sticky">Group Type</th>
             <th class="sticky">Group Name</th>
             <th class="sticky">Description</th>
-            <th class="sticky">Leader ID</th>
-            <th class="sticky">Parent Groups</th>
+            <th class="sticky">Leader</th>
+            <th class="sticky">Parent District</th>
+            <th class="sticky">Parent Region</th>
             <th class="sticky">Actions</th>
             </tr>
             `] //Add other table columns here
@@ -449,15 +450,19 @@ async function show_group_list(params){
             target.push(`<td style="text-align:left">${record.fields.group_desc}</td>`)
 
             //Leader ID
-            if (record.fields.leader_id){
-                target.push(`<td style="text-align:left">${record.fields.leader_id}</td>`)
+            if (record.fields.leader){
+                target.push(`<td style="text-align:left">${record.fields.leader[0]}</td>`)
             } else target.push("<td></td>")
 
             //Parent Groups
             if (record.fields.type === "Region") {
+                target.push("<td></td><td></td>")
+            } else if (record.fields.type === "District") {
                 target.push("<td></td>")
+                target.push(`<td style="text-align:left">${record.fields.region_name}</td>`)
             } else {
-                target.push(`<td style="text-align:left">${record.fields.parent_groups}</td>`)
+                target.push(`<td style="text-align:left">${record.fields.district_name}</td>`)
+                target.push(`<td style="text-align:left">${record.fields.region_name}</td>`)
             }
 
             //Actions
@@ -588,54 +593,67 @@ async function manage_my_group(params) {
     //show spinner loading icon
     tag("management-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>'
 
+    const user_data = get_user_data()
+    console.log(user_data)
+
     const response=await server_request({
         mode:"get_group_members", //the name of a function in app.gs on GAS
-        group: '3' //<CHANGEME dynamically generate this number based on current user.
+        user: user_data.user_id,
+        group: ''
     })
     //remove spinner icon
     tag("management-message").innerHTML=''
 
     console.log('My Group Info: ',response)
 
-    if(response.status==="success"){//If the data is retrieved successfully, we proceed.
-    
-        tag("management-title").innerHTML=`<h2>My ${response.group_data[0].fields.type}</h2>`
+    if(response.status === "success") {
+        
+        tag("management-title").innerHTML=`<h2>"${response.group_data[0].fields.group_name}" ${response.group_data[0].fields.type} Membership</h2>`
         //<CHANGEME>Build the table to display the groups.
-        /*
         const html=[`
         <table class="inventory-table">
             <tr>
-            <th class="sticky">COLUMN NAME</th>
-            <th class="sticky">COLUMN NAME</th>
-            <th class="sticky">CoLUMN NAME</th>
+            <th class="sticky">Name</th>
+            <th class="sticky" id="Region">Region</th>
+            <th class="sticky" id="District">District</th>
+            <th class="sticky" id="Table">table</th>
+            <th class="sticky">Actions</th>
             </tr>
-            `] //<Add Columns As Needed>
+            `] //Add other table columns here
 
-    
         //processing the data to fit in the table
-        for(record of response.data){
-            let target=html
-            //add a new table row to the table for each group
+        for(record of response.member_data){
+            //for each new record, create new row
+            let target=html;
             target.push("<tr>")
 
-            //Header for Colum 1
-            target.push(`<td style="text-align:left">${record.fields.column1data}</td>`) //<CHANGEME> to column name
+            //Name
+            target.push(`<td style="text-align: left">${record.fields.Name}</td>`)
 
-            //Header for Column 2
-            target.push(`<td style="text-align:left">${record.fields.column2data}</td>`) //<CHANGEME> to column name
+            //Table
+            target.push(`<td style="text-align: left">${record.fields.region}</td>`)
 
-            //Header of Column 3
-            target.push(`<td>${record.fields.colum3data}</td>`) //<CHANGEME> to column name
+            //District
+            target.push(`<td style="text-align: left">${record.fields.district}</td>`)
 
+            //Region
+            target.push(`<td style="text-align: left">${record.fields.table}</td>`)
+
+            //actions
+            target.push(`<td style="text-align: left">`)
+                if (!(record.fields.Name == (user_data.first_name + " " + user_data.last_name))) {
+                    target.push(`<a class="tools" onclick='move_member(${JSON.stringify(record)})'>Move Member</a>`)
+                }
+            target.push(`</td>`)
+
+            //close row
             target.push("</tr>")
         }
         html.push("</table>")
-        tag("data_panel").innerHTML=html.join("") //<CHANGEME> to panel name
-        */
-       tag("management-message").innerHTML='This page is under construction. Check back soon.'
+        tag("management_panel").innerHTML=html.join("")
     }else{
         //This executes if the data needed to create the form or report is not retrieved successfully. It is essentially an error message to the user.
-        tag("data_panel").innerHTML="Unable to get group list: " + response.message + "." //<CHANGEME> to panel name
+        tag("management_panel").innerHTML="Unable to get group list: " + response.message + "." //<CHANGEME> to panel name
     }
 }
 
@@ -963,9 +981,9 @@ async function employee_list(){
     //Build the HTML placeholders for the employee data.
     tag("canvas").innerHTML=` 
     <div class="page">
-        <h2>Employee List</h2>
+        <h2>Member List</h2>
         <div id="member-list-message" style="padding-top:1rem;margin-bottom:1rem">
-        Employee information is private and should not be shared.
+        Member contact information is private and should not be shared.
         </div>
         <div id="employee_list_panel">
         <i class="fas fa-spinner fa-pulse"></i>
@@ -988,7 +1006,7 @@ async function employee_list(){
     }
 
     //determine if the user has a role that allows for employee updates.
-    const is_admin=intersect(get_user_data().roles, ["administrator","owner","manager"]).length>0
+    const is_admin=intersect(get_user_data().roles, ["administrator"]).length>0
 
     if(response.status==="success"){
         const html=['<table style="background-color:white"><tr>']
