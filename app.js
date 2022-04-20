@@ -641,8 +641,8 @@ async function manage_my_group(params) {
 
             //actions
             target.push(`<td style="text-align: left">`)
-                if (!(record.fields.Name == (user_data.first_name + " " + user_data.last_name))) {
-                    target.push(`<a class="tools" onclick='move_member(${JSON.stringify(record)})'>Move Member</a>`)
+                if (!(record.fields.Name == (get_user_name()))) {
+                    target.push(`<a class="tools" onclick="move_member({user_id:'${record.fields.uuid}'})">Move Member</a>`) //({email:'${record.fields.email}',
                 }
             target.push(`</td>`)
 
@@ -664,11 +664,10 @@ async function move_member(params) {
 
     hide_menu()
 
-    //<CHANGEME> create div names related to what data is being viewed
     //build web page with Title, Info, and Content sections
     tag("canvas").innerHTML=` 
         <div class="page">
-            <div id="move-title" style="text-align:center"><h2>Data</h2></div>
+            <div id="move-title" style="text-align:center"><h2>Initiating User Move</h2></div>
             <div id="move-message" style="width:100%"></div>
             <div id="move_panel"  style="width:100%">
             </div>
@@ -683,43 +682,108 @@ async function move_member(params) {
         user_id: params.user_id
     })
     //remove spinner icon
-    tag("move-message").innerHTML='' //<New Message ID>
+    tag("move-message").innerHTML='' 
 
     console.log('Move Form Information: ',response)
 
     if(response.status==="success"){//If the data is retrieved successfully, we proceed.
-        
-        tag("data-title").innerHTML='<h2>Data</h2>'
-        //<CHANGEME>Build the table to display the groups.
-        const form=[`
+        const user_data = get_user_data()
 
-        `] //<Add Columns As Needed>
+        tag("move-title").innerHTML=`<h2>Moving ${response.member_data[0].fields.Name}</h2>`
+        const form=[`<form><input type=hidden name="user_id" value='${response.member_data[0].fields.uuid}'><br>`]
 
-    
-        //processing the data to fit in the table
-        for(record of response.data){ //<CHANGEME> Reformat
-            let target=html
-            //add a new table row to the table for each group
-            target.push("<tr>")
-
-            //Header for Colum 1
-            target.push(`<td style="text-align:left">${record.fields.column1data}</td>`)//<CHANGEME> to column name
-
-            //Header for Column 2
-            target.push(`<td style="text-align:left">${record.fields.column2data}</td>`) //<CHANGEME> to column name
-
-            //Header of Column 3
-            target.push(`<td>${record.fields.colum3data}</td>`) //<CHANGEME> to column name
-
-            target.push("</tr>")
+        //show region section if authorized
+        if (intersect(user_data.roles, ["administrator"]).length>0){
+            form.push("New Region: <select name='region' id='region'>")
+            for(region of response.group_data.regions){
+                if (region.fields.group_name === response.member_data[0].fields.region[0]) { //if current region is user's region
+                    form.push(`<option value="${region.fields.group_id}" selected>${region.fields.group_name}</option>`)
+                } else {
+                    form.push(`<option value="${region.fields.group_id}">${region.fields.group_name}</option>`)
+                }
+            }
+            form.push("</select><br><br>")
+        } else {
+            form.push(`<input type=hidden name='region_hid' id='region_hid' value = ${response.member_data[0].fields.region}>`)
         }
-        html.push("</table>")
-        tag("data_panel").innerHTML=html.join("") //<CHANGEME> to panel name
+
+        //show district section if authorized
+        if (intersect(user_data.roles, ["administrator", "region_leader"]).length>0) {
+            form.push("New District: <select name='district' id='district'>")
+            for(district of response.group_data.districts){
+                if (district.fields.group_name === response.member_data[0].fields.district[0]) {
+                    form.push(`<option value="${district.fields.group_id}" selected>${district.fields.group_name}</option>`)
+                } else {
+                    form.push(`<option value="${district.fields.group_id}">${district.fields.group_name}</option>`)
+                }
+            }
+            form.push("</select><br><br>")
+        }else {
+            form.push(`<input type=hidden name='district_hid' id='district_hid' value = ${response.member_data[0].fields.district}>`)
+        }
+
+        //show table section
+        if(intersect(user_data.roles, ["administrator", "region_leader", "district_leader"]).length>0) {
+            form.push("New Table: <select name='table' id='table'>")
+            for(table of response.group_data.tables){
+                if (table.fields.group_name === response.member_data[0].fields.table[0]) {
+                    form.push(`<option value="${table.fields.group_id}" selected>${table.fields.group_name}</option>`)
+                } else {
+                    form.push(`<option value="${table.fields.group_id}">${table.fields.group_name}</option>`)
+                }
+            }
+            form.push("</select><br><br>")
+        } else {
+            form.push(`<input type=hidden name='table_hid' id='table_hid' value = ${response.member_data[0].fields.table}>`)
+        }
+
+        form.push(`<button type="button" id="submit_user_move" onclick="">Submit</button>`)
+        
+        //close form
+        form.push("</form>")
+        tag("move_panel").innerHTML=form.join("")
+
+        //create onchange functions for region and district
+        var region_select = tag('region')
+        var district_select = tag('district')
+        var table_select = tag('table')
+
+        region_select.onchange = function() {
+            //clear district & table values
+            district_select.length = 0
+            table_select.length = 0
+
+            //replace district values
+            for (district of response.group_data.districts) {
+                if (district.fields.region_name[0] === region_select.options[region_select.selectedIndex].innerText) {
+                    district_select.options[district_select.options.length] = new Option(district.fields.group_name, district.fields.group_id)
+                }
+            }
+
+            //replace table values
+            for (table of response.group_data.tables) {
+                if (table.fields.district_name[0] === district_select.options[district_select.selectedIndex].innerText) {
+                    table_select.options[table_select.options.length] = new Option(table.fields.group_name, table.fields.group_id)
+                }
+            }
+        }
+        district_select.onchange = function() {
+            //clear table values
+            table_select.length=0
+
+            //replace table values
+            for (table of response.group_data.tables) {
+                if (table.fields.district_name[0] === district_select.options[district_select.selectedIndex].innerText) {
+                    table_select.options[table_select.options.length] = new Option(table.fields.group_name, table.fields.group_id)
+                }
+            }
+        }
     }else{
         //This executes if the data needed to create the form or report is not retrieved successfully. It is essentially an error message to the user.
-        tag("data_panel").innerHTML="Unable to get group list: " + response.message + "." //<CHANGEME> to panel name
+        tag("move_panel").innerHTML="Unable to initiate user move: " + response.message.error.type + "." + response.message.error.message
     }
 }
+
 
 async function show_inventory_summary(params){
     console.log('in show_inventory_summary')
