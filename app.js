@@ -126,7 +126,6 @@ const authenticated_menu=[
     //section for Tribe of Kyngs Functions
     {label:"Groups",function:"navigate({fn:'show_group_list'})"},
     {label:get_group_menu_item, id:"manage_button", function: "navigate({fn:'manage_my_group'})", roles:["district_leader", "region_leader"]},
-    {label: "Move Rod Testwright",function:"navigate({fn:'move_member', user_id:9})"},
 ]
 
 function get_group_menu_item() {
@@ -607,6 +606,8 @@ async function manage_my_group(params) {
     console.log('My Group Info: ',response)
 
     if(response.status === "success") {
+
+        const is_admin=intersect(get_user_data().roles, ["administrator"]).length>0
         
         tag("management-title").innerHTML=`<h2>"${response.group_data[0].fields.group_name}" ${response.group_data[0].fields.type} Membership</h2>`
         //<CHANGEME>Build the table to display the groups.
@@ -641,7 +642,7 @@ async function manage_my_group(params) {
 
             //actions
             target.push(`<td style="text-align: left">`)
-                if (!(record.fields.Name == (get_user_name()))) {
+                if (!(record.fields.Name == (get_user_name())) || is_admin) {
                     target.push(`<a class="tools" onclick="move_member({user_id:'${record.fields.uuid}'})">Move Member</a>`) //({email:'${record.fields.email}',
                 }
             target.push(`</td>`)
@@ -690,7 +691,10 @@ async function move_member(params) {
         const user_data = get_user_data()
 
         tag("move-title").innerHTML=`<h2>Moving ${response.member_data[0].fields.Name}</h2>`
-        const form=[`<form><input type=hidden name="user_id" value='${response.member_data[0].fields.uuid}'><br>`]
+        const form=[`
+        <form>
+        <input type=hidden name="mode" value="submit_move">
+        <input type=hidden name="user_id" value='${response.member_data[0].fields.uuid}'><br>`]
 
         //show region section if authorized
         if (intersect(user_data.roles, ["administrator"]).length>0){
@@ -709,12 +713,14 @@ async function move_member(params) {
 
         //show district section if authorized
         if (intersect(user_data.roles, ["administrator", "region_leader"]).length>0) {
-            form.push("New District: <select name='district' id='district'>")
+            form.push(`New District: <select name='district' id='district'>`)
             for(district of response.group_data.districts){
-                if (district.fields.group_name === response.member_data[0].fields.district[0]) {
-                    form.push(`<option value="${district.fields.group_id}" selected>${district.fields.group_name}</option>`)
-                } else {
-                    form.push(`<option value="${district.fields.group_id}">${district.fields.group_name}</option>`)
+                if(district.fields.region_name[0] === response.member_data[0].fields.region[0]) {
+                    if (district.fields.group_name === response.member_data[0].fields.district[0]) {
+                        form.push(`<option value="${district.fields.group_id}" selected>${district.fields.group_name}</option>`)
+                    } else {
+                        form.push(`<option value="${district.fields.group_id}">${district.fields.group_name}</option>`)
+                    }
                 }
             }
             form.push("</select><br><br>")
@@ -726,10 +732,12 @@ async function move_member(params) {
         if(intersect(user_data.roles, ["administrator", "region_leader", "district_leader"]).length>0) {
             form.push("New Table: <select name='table' id='table'>")
             for(table of response.group_data.tables){
-                if (table.fields.group_name === response.member_data[0].fields.table[0]) {
-                    form.push(`<option value="${table.fields.group_id}" selected>${table.fields.group_name}</option>`)
-                } else {
-                    form.push(`<option value="${table.fields.group_id}">${table.fields.group_name}</option>`)
+                if(table.fields.district_name[0] === response.member_data[0].fields.district[0]) {
+                    if (table.fields.group_name === response.member_data[0].fields.table[0]) {
+                        form.push(`<option value="${table.fields.group_id}" selected>${table.fields.group_name}</option>`)
+                    } else {
+                        form.push(`<option value="${table.fields.group_id}">${table.fields.group_name}</option>`)
+                    }
                 }
             }
             form.push("</select><br><br>")
@@ -737,7 +745,8 @@ async function move_member(params) {
             form.push(`<input type=hidden name='table_hid' id='table_hid' value = ${response.member_data[0].fields.table}>`)
         }
 
-        form.push(`<button type="button" id="submit_user_move" onclick="">Submit</button>`)
+        form.push(`<button type="button" id="submit_user_move" onclick="submit_move(form_data(this,true))">Submit</button>`)
+        form.push(`&nbsp;&nbsp;<button type="button" id="cancel" onclick="manage_my_group()">Cancel</button>`)
         
         //close form
         form.push("</form>")
@@ -784,6 +793,17 @@ async function move_member(params) {
     }
 }
 
+async function submit_move(params){
+    console.log("In submit_move", params)
+
+    const response=await server_request(params)
+
+    if (!(response.status === "success")) {
+        alert("Move rejected: ", response.message.error.type + ".\n" + response.message.error.message)
+    }
+
+    navigate({fn:'manage_my_group'})
+}
 
 async function show_inventory_summary(params){
     console.log('in show_inventory_summary')
