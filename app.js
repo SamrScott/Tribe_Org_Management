@@ -642,7 +642,7 @@ async function manage_my_group(params) {
 
             //actions
             target.push(`<td style="text-align: left">`)
-                if (!(record.fields.Name == (get_user_name())) || is_admin) {
+                if (record.fields.Name != (get_user_name()) || is_admin) {
                     target.push(`<a class="tools" onclick="move_member({user_id:'${record.fields.uuid}'})">Move Member</a>`) //({email:'${record.fields.email}',
                 }
             target.push(`</td>`)
