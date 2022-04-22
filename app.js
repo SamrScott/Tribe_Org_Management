@@ -963,11 +963,12 @@ async function add_member(params){
             <div id="group-title" style="text-align:center"><h2>Add Member</h2></div>
             <div id="group-message" style="width:100%">Please enter in new member information.</div>
             <div id="group_panel"  style="width:100%">
+            <br>
             <label><b>First Name</b></label> <input type="text" name="first_name" id="first_name"> <br>
             <label><b>Last Name</b></label> <input type="text" name="last_name" id="last_name">  <br>
-            <label for="email"><b>Email</b></label> <input type="email" name="email" id="email">  <br>
+            <label><b>Email</b></label> <input type="email" name="email" id="email">  <br>
             <label><b>Address</b></label> <input type="text" name="address" id="address">  <br>
-            <label><b>Phone</b></label> <input type="phone" name="phone" id="phone">  <br>
+            <label><b>Phone</b></label> <input type="tel" name="phone" id="phone">  <br>
             <input type="hidden" name="mode" value="add_member">
             </div>
             <button onclick=gas_add_member(form_data(this,true))>Submit</button> 
