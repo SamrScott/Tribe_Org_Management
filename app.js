@@ -958,42 +958,31 @@ async function add_member(params){
 
     //build web page with Title, Info, and Content sections
     tag("canvas").innerHTML=` 
-    <form action="">
+    <form>
         <div class="page">
             <div id="group-title" style="text-align:center"><h2>Add Member</h2></div>
             <div id="group-message" style="width:100%">Please enter in new member information.</div>
             <div id="group_panel"  style="width:100%">
-            <label><b>First Name</b></label> <input type="text"> <br>
-            <label><b>Last Name</b></label> <input type="text">  <br>
-            <label><b>Roles</b></label> <input> <br>
-            <label for="email"><b>Email</b></label> <input type="email">  <br>
-            <label><b>Address</b></label> <input type="text">  <br>
-            <label><b>Phone</b></label> <input type="phone">  <br>
-            <label><b>Table</b></label> <input> <br>
-            <label><b>District</b></label> <input>  <br>
-            <label><b>Region</b></label> <input>  <br>
+            <label><b>First Name</b></label> <input type="text" name="first_name" id="first_name"> <br>
+            <label><b>Last Name</b></label> <input type="text" name="last_name" id="last_name">  <br>
+            <label for="email"><b>Email</b></label> <input type="email" name="email" id="email">  <br>
+            <label><b>Address</b></label> <input type="text" name="address" id="address">  <br>
+            <label><b>Phone</b></label> <input type="phone" name="phone" id="phone">  <br>
+            <input type="hidden" name="mode" value="add_member">
             </div>
-            <button onclick=add_member>Submit</button> 
+            <button onclick=gas_add_member(form_data(this,true))>Submit</button> 
         </div> 
     </form> 
     `
 
-    //show spinner loading icon
-    tag("group-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>'
-
-    const response=await server_request({
-        mode:"add_member"
-    })
-    //remove spinner icon
-    tag("group-message").innerHTML=''
-
-    console.log('group_list: ',response)
-
 }
 
-onclick=some_function
 async function gas_add_member(params) {
-    payload = {mode:"add_member", field1:params.first_name, field2: params.last_name, field3: params.roles, field4: params.email, field5: params.address, field6: params.phone, field7: params.table, field8: params.district, field9: params.region}
-  const response=await server_request(payload)
+  const response=await server_request(params)
   show_all_members()
+if (response.status==="success") {
+    alert("Member Added Successfully")
+}
+    else{ alert(response.message)}
+
 }
