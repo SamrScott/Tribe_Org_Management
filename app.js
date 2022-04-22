@@ -18,13 +18,13 @@ async function show_some_data(params){ //<CHANGEME> name function after data bei
     `
 
     //show spinner loading icon
-    tag("data-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>' \\<New Message ID>
+    tag("data-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>' //<New Message ID>
 
     const response=await server_request({
-        mode:"<SERVER FUNCTION NAME>" \\the name of a function in app.gs on GAS
+        mode:"<SERVER FUNCTION NAME>" //the name of a function in app.gs on GAS
     })
     //remove spinner icon
-    tag("data-message").innerHTML='' \\<New Message ID>
+    tag("data-message").innerHTML='' //<New Message ID>
 
     console.log('<Data title>: ',response)
 
@@ -49,18 +49,18 @@ async function show_some_data(params){ //<CHANGEME> name function after data bei
             target.push("<tr>")
 
             //Header for Colum 1
-            target.push(`<td style="text-align:left">${record.fields.column1data}</td>`) \\<CHANGEME> to column name
+            target.push(`<td style="text-align:left">${record.fields.column1data}</td>`)//<CHANGEME> to column name
 
             //Header for Column 2
-            target.push(`<td style="text-align:left">${record.fields.column2data}</td>`) \\<CHANGEME> to column name
+            target.push(`<td style="text-align:left">${record.fields.column2data}</td>`) //<CHANGEME> to column name
 
             //Header of Column 3
-            target.push(`<td>${record.fields.colum3data}</td>`) \\<CHANGEME> to column name
+            target.push(`<td>${record.fields.colum3data}</td>`) //<CHANGEME> to column name
 
             target.push("</tr>")
         }
         html.push("</table>")
-        tag("data_panel").innerHTML=html.join("") \\<CHANGEME> to panel name
+        tag("data_panel").innerHTML=html.join("") //<CHANGEME> to panel name
     }else{
         //This executes if the data needed to create the form or report is not retrieved successfully. It is essentially an error message to the user.
         tag("data_panel").innerHTML="Unable to get group list: " + response.message + "." \\<CHANGEME> to panel name
@@ -125,9 +125,25 @@ const authenticated_menu=[
     {},
     //section for Tribe of Kyngs Functions
     {label:"Groups",function:"navigate({fn:'show_group_list'})"},
+    {label:get_group_menu_item, id:"manage_button", function: "navigate({fn:'manage_my_group'})", roles:["district_leader", "region_leader"]},
     {label:"View Members",function:"navigate({fn:'show_user_list'})"},
-
 ]
+
+function get_group_menu_item() {
+    //gets the current logged-in user's group name
+    data=get_user_data()
+    console.log(data)
+    msg = "Manage My "
+    group_type = ''
+    for (role in data.roles) {
+        if (data.roles[role] == "region_leader"){group_type = "Region"}
+        else if (data.roles[role] == "district_leader"){group_type = "District"}
+        else if (data.roles[role] == "table_leader"){group_type = "Table"}
+    }
+    if (group_type === '')
+        group_type = "Friends"
+    return msg + group_type
+}
 
 
 function show_home(){
@@ -407,8 +423,9 @@ async function show_group_list(params){
             <th class="sticky">Group Type</th>
             <th class="sticky">Group Name</th>
             <th class="sticky">Description</th>
-            <th class="sticky">Leader ID</th>
-            <th class="sticky">Parent Groups</th>
+            <th class="sticky">Leader</th>
+            <th class="sticky">Parent District</th>
+            <th class="sticky">Parent Region</th>
             <th class="sticky">Actions</th>
             </tr>
             `] //Add other table columns here
@@ -433,15 +450,19 @@ async function show_group_list(params){
             target.push(`<td style="text-align:left">${record.fields.group_desc}</td>`)
 
             //Leader ID
-            if (record.fields.leader_id){
-                target.push(`<td style="text-align:left">${record.fields.leader_id}</td>`)
+            if (record.fields.leader){
+                target.push(`<td style="text-align:left">${record.fields.leader[0]}</td>`)
             } else target.push("<td></td>")
 
             //Parent Groups
             if (record.fields.type === "Region") {
+                target.push("<td></td><td></td>")
+            } else if (record.fields.type === "District") {
                 target.push("<td></td>")
+                target.push(`<td style="text-align:left">${record.fields.region_name}</td>`)
             } else {
-                target.push(`<td style="text-align:left">${record.fields.parent_groups}</td>`)
+                target.push(`<td style="text-align:left">${record.fields.district_name}</td>`)
+                target.push(`<td style="text-align:left">${record.fields.region_name}</td>`)
             }
 
             //Actions
@@ -652,8 +673,239 @@ async function view_group_members(group_id, group_type){
         //This executes if the data needed to create the form or report is not retrieved successfully. It is essentially an error message to the user.
         tag("members_panel").innerHTML="Unable to get membership records: " + response.message + "."        
     }
+}
 
-    
+async function manage_my_group(params) {
+    console.log('in manage_my_group')
+
+    if(!logged_in()){show_home();return}//in case followed a link after logging out. This prevents the user from using this feature when they are not authenticated.
+
+    hide_menu()
+
+    //build web page with Title, Info, and Content sections
+    tag("canvas").innerHTML=` 
+        <div class="page">
+            <div id="management-title" style="text-align:center"><h2>My Group</h2></div>
+            <div id="management-message" style="width:100%"></div>
+            <div id="management_panel"  style="width:100%">
+            </div>
+        </div>  
+    `
+
+    //show spinner loading icon
+    tag("management-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>'
+
+    const user_data = get_user_data()
+    console.log(user_data)
+
+    const response=await server_request({
+        mode:"get_group_members", //the name of a function in app.gs on GAS
+        user: user_data.user_id,
+        group: ''
+    })
+    //remove spinner icon
+    tag("management-message").innerHTML=''
+
+    console.log('My Group Info: ',response)
+
+    if(response.status === "success") {
+
+        const is_admin=intersect(get_user_data().roles, ["administrator"]).length>0
+        
+        tag("management-title").innerHTML=`<h2>"${response.group_data[0].fields.group_name}" ${response.group_data[0].fields.type} Membership</h2>`
+        //<CHANGEME>Build the table to display the groups.
+        const html=[`
+        <table class="inventory-table">
+            <tr>
+            <th class="sticky">Name</th>
+            <th class="sticky" id="Region">Region</th>
+            <th class="sticky" id="District">District</th>
+            <th class="sticky" id="Table">table</th>
+            <th class="sticky">Actions</th>
+            </tr>
+            `] //Add other table columns here
+
+        //processing the data to fit in the table
+        for(record of response.member_data){
+            //for each new record, create new row
+            let target=html;
+            target.push("<tr>")
+
+            //Name
+            target.push(`<td style="text-align: left">${record.fields.Name}</td>`)
+
+            //Table
+            target.push(`<td style="text-align: left">${record.fields.region}</td>`)
+
+            //District
+            target.push(`<td style="text-align: left">${record.fields.district}</td>`)
+
+            //Region
+            target.push(`<td style="text-align: left">${record.fields.table}</td>`)
+
+            //actions
+            target.push(`<td style="text-align: left">`)
+                if (record.fields.Name != (get_user_name()) || is_admin) {
+                    target.push(`<a class="tools" onclick="move_member({user_id:'${record.fields.uuid}'})">Move Member</a>`) //({email:'${record.fields.email}',
+                }
+            target.push(`</td>`)
+
+            //close row
+            target.push("</tr>")
+        }
+        html.push("</table>")
+        tag("management_panel").innerHTML=html.join("")
+    }else{
+        //This executes if the data needed to create the form or report is not retrieved successfully. It is essentially an error message to the user.
+        tag("management_panel").innerHTML="Unable to get group list: " + response.message + "." //<CHANGEME> to panel name
+    }
+}
+
+async function move_member(params) {
+    console.log('in move_member')
+
+    if(!logged_in()){show_home();return}//in case followed a link after logging out. This prevents the user from using this feature when they are not authenticated.
+
+    hide_menu()
+
+    //build web page with Title, Info, and Content sections
+    tag("canvas").innerHTML=` 
+        <div class="page">
+            <div id="move-title" style="text-align:center"><h2>Initiating User Move</h2></div>
+            <div id="move-message" style="width:100%"></div>
+            <div id="move_panel"  style="width:100%">
+            </div>
+        </div>  
+    `
+
+    //show spinner loading icon
+    tag("move-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>'
+
+    const response=await server_request({
+        mode:"move_form_data", //the name of a function in app.gs on GAS
+        user_id: params.user_id
+    })
+    //remove spinner icon
+    tag("move-message").innerHTML='' 
+
+    console.log('Move Form Information: ',response)
+
+    if(response.status==="success"){//If the data is retrieved successfully, we proceed.
+        const user_data = get_user_data()
+
+        tag("move-title").innerHTML=`<h2>Moving ${response.member_data[0].fields.Name}</h2>`
+        const form=[`
+        <form>
+        <input type=hidden name="mode" value="submit_move">
+        <input type=hidden name="user_id" value='${response.member_data[0].fields.uuid}'><br>`]
+
+        //show region section if authorized
+        if (intersect(user_data.roles, ["administrator"]).length>0){
+            form.push("New Region: <select name='region' id='region'>")
+            for(region of response.group_data.regions){
+                if (region.fields.group_name === response.member_data[0].fields.region[0]) { //if current region is user's region
+                    form.push(`<option value="${region.fields.group_id}" selected>${region.fields.group_name}</option>`)
+                } else {
+                    form.push(`<option value="${region.fields.group_id}">${region.fields.group_name}</option>`)
+                }
+            }
+            form.push("</select><br><br>")
+        } else {
+            form.push(`<input type=hidden name='region_hid' id='region_hid' value = ${response.member_data[0].fields.region}>`)
+        }
+
+        //show district section if authorized
+        if (intersect(user_data.roles, ["administrator", "region_leader"]).length>0) {
+            form.push(`New District: <select name='district' id='district'>`)
+            for(district of response.group_data.districts){
+                if(district.fields.region_name[0] === response.member_data[0].fields.region[0]) {
+                    if (district.fields.group_name === response.member_data[0].fields.district[0]) {
+                        form.push(`<option value="${district.fields.group_id}" selected>${district.fields.group_name}</option>`)
+                    } else {
+                        form.push(`<option value="${district.fields.group_id}">${district.fields.group_name}</option>`)
+                    }
+                }
+            }
+            form.push("</select><br><br>")
+        }else {
+            form.push(`<input type=hidden name='district_hid' id='district_hid' value = ${response.member_data[0].fields.district}>`)
+        }
+
+        //show table section
+        if(intersect(user_data.roles, ["administrator", "region_leader", "district_leader"]).length>0) {
+            form.push("New Table: <select name='table' id='table'>")
+            for(table of response.group_data.tables){
+                if(table.fields.district_name[0] === response.member_data[0].fields.district[0]) {
+                    if (table.fields.group_name === response.member_data[0].fields.table[0]) {
+                        form.push(`<option value="${table.fields.group_id}" selected>${table.fields.group_name}</option>`)
+                    } else {
+                        form.push(`<option value="${table.fields.group_id}">${table.fields.group_name}</option>`)
+                    }
+                }
+            }
+            form.push("</select><br><br>")
+        } else {
+            form.push(`<input type=hidden name='table_hid' id='table_hid' value = ${response.member_data[0].fields.table}>`)
+        }
+
+        form.push(`<button type="button" id="submit_user_move" onclick="submit_move(form_data(this,true))">Submit</button>`)
+        form.push(`&nbsp;&nbsp;<button type="button" id="cancel" onclick="manage_my_group()">Cancel</button>`)
+        
+        //close form
+        form.push("</form>")
+        tag("move_panel").innerHTML=form.join("")
+
+        //create onchange functions for region and district
+        var region_select = tag('region')
+        var district_select = tag('district')
+        var table_select = tag('table')
+
+        region_select.onchange = function() {
+            //clear district & table values
+            district_select.length = 0
+            table_select.length = 0
+
+            //replace district values
+            for (district of response.group_data.districts) {
+                if (district.fields.region_name[0] === region_select.options[region_select.selectedIndex].innerText) {
+                    district_select.options[district_select.options.length] = new Option(district.fields.group_name, district.fields.group_id)
+                }
+            }
+
+            //replace table values
+            for (table of response.group_data.tables) {
+                if (table.fields.district_name[0] === district_select.options[district_select.selectedIndex].innerText) {
+                    table_select.options[table_select.options.length] = new Option(table.fields.group_name, table.fields.group_id)
+                }
+            }
+        }
+        district_select.onchange = function() {
+            //clear table values
+            table_select.length=0
+
+            //replace table values
+            for (table of response.group_data.tables) {
+                if (table.fields.district_name[0] === district_select.options[district_select.selectedIndex].innerText) {
+                    table_select.options[table_select.options.length] = new Option(table.fields.group_name, table.fields.group_id)
+                }
+            }
+        }
+    }else{
+        //This executes if the data needed to create the form or report is not retrieved successfully. It is essentially an error message to the user.
+        tag("move_panel").innerHTML="Unable to initiate user move: " + response.message.error.type + "." + response.message.error.message
+    }
+}
+
+async function submit_move(params){
+    console.log("In submit_move", params)
+
+    const response=await server_request(params)
+
+    if (!(response.status === "success")) {
+        alert("Move rejected: ", response.message.error.type + ".\n" + response.message.error.message)
+    }
+
+    navigate({fn:'manage_my_group'})
 }
 
 async function show_inventory_summary(params){
@@ -980,9 +1232,9 @@ async function employee_list(){
     //Build the HTML placeholders for the employee data.
     tag("canvas").innerHTML=` 
     <div class="page">
-        <h2>Employee List</h2>
+        <h2>Member List</h2>
         <div id="member-list-message" style="padding-top:1rem;margin-bottom:1rem">
-        Employee information is private and should not be shared.
+        Member contact information is private and should not be shared.
         </div>
         <div id="employee_list_panel">
         <i class="fas fa-spinner fa-pulse"></i>
@@ -1005,7 +1257,7 @@ async function employee_list(){
     }
 
     //determine if the user has a role that allows for employee updates.
-    const is_admin=intersect(get_user_data().roles, ["administrator","owner","manager"]).length>0
+    const is_admin=intersect(get_user_data().roles, ["administrator"]).length>0
 
     if(response.status==="success"){
         const html=['<table style="background-color:white"><tr>']
