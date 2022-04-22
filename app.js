@@ -127,7 +127,7 @@ const authenticated_menu=[
     {label:"Groups",function:"navigate({fn:'show_group_list'})"},
     //This menu item adds a new user to the system
     {label:"Add Member",function:"navigate({fn:'add_member'})", roles:["administrator","district leader","region leader"]},
-
+    {label:"Add Leader",function:"navigate({fn:'add_leader'})", roles:["administrator","district leader","region leader"]},
 ]
 
 
