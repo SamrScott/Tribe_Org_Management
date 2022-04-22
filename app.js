@@ -125,6 +125,8 @@ const authenticated_menu=[
     {},
     //section for Tribe of Kyngs Functions
     {label:"Groups",function:"navigate({fn:'show_group_list'})"},
+    //This menu item adds a new user to the system
+    {label:"Add Member",function:"navigate({fn:'add_member'})", roles:["administrator","district leader","region leader"]},
 
 ]
 
