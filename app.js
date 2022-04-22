@@ -967,11 +967,11 @@ async function add_member(params){
             <label><b>First Name</b></label> <input type="text" name="first_name" id="first_name"> <br>
             <label><b>Last Name</b></label> <input type="text" name="last_name" id="last_name">  <br>
             <label><b>Email</b></label> <input type="email" name="email" id="email">  <br>
-            <label><b>Address</b></label> <input type="text" name="address" id="address">  <br>
+            <label><b>Address</b></label> <input type="text" name="addr" id="address">  <br>
             <label><b>Phone</b></label> <input type="tel" name="phone" id="phone">  <br>
             <input type="hidden" name="mode" value="add_member">
             </div>
-            <button onclick=gas_add_member(form_data(this,true))>Submit</button> 
+            <button type="button" onclick=gas_add_member(form_data(this,true))>Submit</button> 
         </div> 
     </form> 
     `
@@ -980,7 +980,7 @@ async function add_member(params){
 
 async function gas_add_member(params) {
   const response=await server_request(params)
-  show_all_members()
+  add_member()
 if (response.status==="success") {
     alert("Member Added Successfully")
 }
