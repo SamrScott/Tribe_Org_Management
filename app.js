@@ -948,3 +948,52 @@ async function employee_list(){
     }    
 
 }
+
+async function add_member(params){
+    console.log('in add_member')
+
+    if(!logged_in()){show_home();return}//in case followed a link after logging out. This prevents the user from using this feature when they are not authenticated.
+
+    hide_menu()
+
+    //build web page with Title, Info, and Content sections
+    tag("canvas").innerHTML=` 
+    <form action="">
+        <div class="page">
+            <div id="group-title" style="text-align:center"><h2>Add Member</h2></div>
+            <div id="group-message" style="width:100%">Please enter in new member information.</div>
+            <div id="group_panel"  style="width:100%">
+            <label><b>First Name</b></label> <input type="text"> <br>
+            <label><b>Last Name</b></label> <input type="text">  <br>
+            <label><b>Roles</b></label> <input> <br>
+            <label for="email"><b>Email</b></label> <input type="email">  <br>
+            <label><b>Address</b></label> <input type="text">  <br>
+            <label><b>Phone</b></label> <input type="phone">  <br>
+            <label><b>Table</b></label> <input> <br>
+            <label><b>District</b></label> <input>  <br>
+            <label><b>Region</b></label> <input>  <br>
+            </div>
+            <button onclick=add_member>Submit</button> 
+        </div> 
+    </form> 
+    `
+
+    //show spinner loading icon
+    tag("group-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>'
+
+    const response=await server_request({
+        mode:"add_member"
+    })
+    //remove spinner icon
+    tag("group-message").innerHTML=''
+
+    console.log('group_list: ',response)
+
+}
+
+onclick=some_function
+async function gas_add_member(params) {
+    payload = {mode:"add_member", field1:params.first_name, field2: params.last_name, field3: params.roles, field4: params.email, field5: params.address, field6: params.phone, field7: params.table, field8: params.district, field9: params.region}
+  const response=await server_request(payload)
+  show_all_members()
+}
