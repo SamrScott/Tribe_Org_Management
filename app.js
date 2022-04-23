@@ -967,7 +967,7 @@ async function add_member(params){
             <label><b>First Name</b></label> <input type="text" name="first_name" id="first_name"> <br>
             <label><b>Last Name</b></label> <input type="text" name="last_name" id="last_name">  <br>
             <label><b>Email</b></label> <input type="email" name="email" id="email">  <br>
-            <label><b>Address</b></label> <input type="text" name="addr" id="address">  <br>
+            <label><b>Address</b></label> <input type="text" name="addr" id="addr">  <br>
             <label><b>Phone</b></label> <input type="tel" name="phone" id="phone">  <br>
             <input type="hidden" name="mode" value="add_member">
             </div>
