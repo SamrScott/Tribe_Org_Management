@@ -125,6 +125,10 @@ const authenticated_menu=[
     {},
     //section for Tribe of Kyngs Functions
     {label:"Groups",function:"navigate({fn:'show_group_list'})"},
+
+    //This menu item adds a new user to the system
+    {label:"Add Member",function:"navigate({fn:'add_member'})", roles:["administrator","district leader","region leader"]},
+    {label:"Add Leader",function:"navigate({fn:'add_leader'})", roles:["administrator","district leader","region leader"]},
     {label:get_group_menu_item, id:"manage_button", function: "navigate({fn:'manage_my_group'})", roles:["district_leader", "region_leader"]},
     {label:"View Members",function:"navigate({fn:'show_user_list'})"},
 ]
@@ -1301,6 +1305,46 @@ async function employee_list(){
     }    
 
 }
+
+async function add_member(params){
+    console.log('in add_member')
+
+    if(!logged_in()){show_home();return}//in case followed a link after logging out. This prevents the user from using this feature when they are not authenticated.
+
+    hide_menu()
+
+    //build web page with Title, Info, and Content sections
+    tag("canvas").innerHTML=` 
+    <form>
+        <div class="page">
+            <div id="group-title" style="text-align:center"><h2>Add Member</h2></div>
+            <div id="group-message" style="width:100%">Please enter in new member information.</div>
+            <div id="group_panel"  style="width:100%">
+            <br>
+            <label><b>First Name</b></label> <input type="text" name="first_name" id="first_name"> <br>
+            <label><b>Last Name</b></label> <input type="text" name="last_name" id="last_name">  <br>
+            <label><b>Email</b></label> <input type="email" name="email" id="email">  <br>
+            <label><b>Address</b></label> <input type="text" name="addr" id="addr">  <br>
+            <label><b>Phone</b></label> <input type="tel" name="phone" id="phone">  <br>
+            <input type="hidden" name="mode" value="add_member">
+            </div>
+            <button type="button" onclick=gas_add_member(form_data(this,true))>Submit</button> 
+        </div> 
+    </form> 
+    `
+
+}
+
+async function gas_add_member(params) {
+  const response=await server_request(params)
+  add_member()
+if (response.status==="success") {
+    alert("Member Added Successfully")
+}
+    else{ alert(response.message)}
+
+}
+
 //Function for the search bar
 
 function filtertable(columnnumber,inputid) {
