@@ -96,41 +96,42 @@ const authenticated_menu=[
     //The autheticated user is presented with the "Home" and "Locations" (defined in the nav_menu global variable).
     {menu:nav_menu},
     //this empty object inserts a horizontal line in the navigation menu panel
-    {},
+    //{},
     //The authenticated user is also presented with additional menu options.
     //The first item loads the user's name (get_user_name) which is the label for a top-level menu which is built for the user functions
     {label:get_user_name,id:"user-menu", menu:[
         //the user functions include the ability to change their password and edit their personal data
         {label:"Change Password",function:"change_password()",panel: "password_panel"},
-        {label:"Personal Data",function:"navigate({fn:'personal_data'})"},
+        //{label:"Personal Data",function:"navigate({fn:'personal_data'})"},
     ]},
-    //This menu item allows the user to logout
-    {label:"Logout",function:"logout()", home:"Logout"},
+    
     //This menu item builds a sub menu that provides the user with the functionality to request time off and see their requests
-    {label:"Time Off",id:"menu1",menu:[
+    /*{label:"Time Off",id:"menu1",menu:[
         {label:"Request Time Off",function:"navigate({fn:'request_time_off'})"}, 
         {label:"My Requests",function:"navigate({fn:'show_time_off'})"}, 
-    ]},
+    ]},*/
     //This menu item allows the user to add additional users. Note the "roles" property of the object. Only users with the role of "manager", "owner", or "administrator" will see this menu item. User roles are not heirachical. All user types you wish to see a menu item must be listed in the elements of the array.
-    {label:"Add Employee",function:"navigate({fn:'create_account'})", roles:["manager","owner","administrator"]}, 
+    //{label:"Add Employee",function:"navigate({fn:'create_account'})", roles:["manager","owner","administrator"]}, 
     //This menu item adds the menu item for updating an inventory count. Notice how a parameter is passed to the "ice_cream_inventory" function
-    {label:"Enter Ice Cream Inventory",home:"Inventory",function:"navigate({fn:'record_inventory'})"},
+    //{label:"Enter Ice Cream Inventory",home:"Inventory",function:"navigate({fn:'record_inventory'})"},
     //the remaining menu items are added
-    {label:"Ice Cream Inventory Summary",home:"Inventory",function:"navigate({fn:'show_inventory_summary'})", roles:["owner","administrator"]},
+    //{label:"Ice Cream Inventory Summary",home:"Inventory",function:"navigate({fn:'show_inventory_summary'})", roles:["owner","administrator"]},
 
-    {label:"Employee List",function:"navigate({fn:'employee_list'})"},
-    {label:"Admin Tools",id:"menu2", roles:["manager","owner","administrator"], menu:[
-        {label:"Update User",function:"update_user()",panel:"update_user"},
-    ]},
-    {},
-    //section for Tribe of Kyngs Functions
+    
+    
+    {}, //section for Tribe of Kyngs Functions
     {label:"Groups",function:"navigate({fn:'show_group_list'})"},
-
-    //This menu item adds a new user to the system
-    {label:"Add Member",function:"navigate({fn:'add_member'})", roles:["administrator","district leader","region leader"]},
-    {label:"Add Leader",function:"navigate({fn:'add_leader'})", roles:["administrator","district leader","region leader"]},
+    
     {label:get_group_menu_item, id:"manage_button", function: "navigate({fn:'manage_my_group'})", roles:["district_leader", "region_leader"]},
     {label:"View Members",function:"navigate({fn:'show_user_list'})"},
+    {label:"Admin Tools",id:"menu2", roles:["administrator"], menu:[
+        //{label:"Update/Promote Leader",function:"update_user()",panel:"update_user"},
+        {label:"Add Member",function:"navigate({fn:'add_member'})", roles:["administrator","district leader","region leader"]},//This menu item adds a new user to the system
+        {label:"Create/Promote Leader",function:"navigate({fn:'employee_list'})"},
+    ]},
+    {},
+    //This menu item allows the user to logout
+    {label:"Logout",function:"logout()", home:"Logout"},
 ]
 
 function get_group_menu_item() {
@@ -580,12 +581,6 @@ async function show_user_list(params){
         tag("group_panel").innerHTML="Unable to get group list: " + response.message + "."        
     }
 }
-
-
-
-
-
-
 
 async function view_group_members(group_id, group_type){
     console.log(`in view_group_members. Group ID: ${group_id}, Group Type: ${group_type}`)
