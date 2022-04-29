@@ -615,6 +615,7 @@ async function view_group_members(group_id, group_type){
         
         tag("members-title").innerHTML=`<h2>"${response.group_data[0].fields.group_name}" ${response.group_data[0].fields.type} Membership</h2>`
         //<CHANGEME>Build the table to display the groups.
+        const is_admin=intersect(get_user_data().roles, ["administrator"]).length>0
         const html=[`
         <table class="inventory-table">
             <tr>
@@ -645,7 +646,11 @@ async function view_group_members(group_id, group_type){
             target.push(`<td style="text-align: left">${record.fields.table}</td>`)
 
             //actions
-            target.push(`<td style="text-align: left"></td>`)
+            target.push(`<td style="text-align: left">`)
+                if (record.fields.Name != (get_user_name()) || is_admin) {
+                    target.push(`<a class="tools" onclick="move_member({user_id:'${record.fields.uuid}'})">Move Member</a>`) //({email:'${record.fields.email}',
+                }
+            target.push(`</td>`)
 
             //close row
             target.push("</tr>")
